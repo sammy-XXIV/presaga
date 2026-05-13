@@ -1622,7 +1622,7 @@ async function loadAgents() {
   const container = document.getElementById('agents-container')
   try {
     const filter = readContract.filters.AgentRegistered()
-    const events = await readContract.queryFilter(filter, 0, 'latest')
+    const events = await readContract.queryFilter(filter, 21375000, 'latest')
 
     if (events.length === 0) {
       container.innerHTML = `<div class="empty-state">
@@ -1695,7 +1695,7 @@ async function loadHires() {
   const container = document.getElementById('hires-container')
   try {
     const filter = contract.filters.AgentHired(null, walletAddress)
-    const events = await contract.queryFilter(filter, 0, 'latest')
+    const events = await contract.queryFilter(filter, 21375000, 'latest')
 
     if (events.length === 0) {
       container.innerHTML = `<div class="empty-state">
