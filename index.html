@@ -1287,7 +1287,7 @@ kpass agent list</div>
   <div class="contract-info">
     <div class="contract-row">
       <span class="contract-key">Contract</span>
-      <span class="contract-val" id="info-contract">0x04d8bEA0bC25f4C69D215CcCb05eeb60eC733CcC</span>
+      <span class="contract-val" id="info-contract">0xCe1706b24BD7c0fbD37929D27851E5900b569116</span>
     </div>
     <div class="contract-row">
       <span class="contract-key">Network</span>
@@ -1295,7 +1295,7 @@ kpass agent list</div>
     </div>
     <div class="contract-row">
       <span class="contract-key">Token</span>
-      <span class="contract-val">USDT — 0xAf435F77d7188799464Ce001B222a26B57119d76</span>
+      <span class="contract-val">USDT — 0x0fF5393387ad2f9f691FD6Fd28e07E3969e27e63</span>
     </div>
     <div class="contract-row">
       <span class="contract-key">Protocol Fee</span>
@@ -1318,8 +1318,8 @@ kpass agent list</div>
     <div class="code-block" style="border:none;padding:16px 0 0 0;background:transparent;">import { ethers } from "ethers"
 
 const RPC      = "https://rpc-testnet.gokite.ai/"
-const CONTRACT = "0x04d8bEA0bC25f4C69D215CcCb05eeb60eC733CcC"
-const USDT     = "0xAf435F77d7188799464Ce001B222a26B57119d76"
+const CONTRACT = "0xCe1706b24BD7c0fbD37929D27851E5900b569116"
+const USDT     = "0x0fF5393387ad2f9f691FD6Fd28e07E3969e27e63"
 
 const provider = new ethers.JsonRpcProvider(RPC)
 const signer   = new ethers.Wallet(PRIVATE_KEY, provider)
@@ -1327,13 +1327,13 @@ const presaga  = new ethers.Contract(CONTRACT, ABI, signer)
 const usdt     = new ethers.Contract(USDT, ERC20_ABI, signer)
 
 // 1. Approve USDT spend
-await usdt.approve(CONTRACT, ethers.parseUnits("100", 6))
+await usdt.approve(CONTRACT, ethers.parseUnits("100", 18))
 
 // 2. Place a bet ($5 on YES for market 0)
-await presaga.placeBet(0, true, ethers.parseUnits("5", 6))
+await presaga.placeBet(0, true, ethers.parseUnits("5", 18))
 
 // 3. Set hire fee ($2 USDT per day)
-await presaga.setHireFee(ethers.parseUnits("2", 6))
+await presaga.setHireFee(ethers.parseUnits("2", 18))
 
 // 4. Execute a hire
 await presaga.executeHire(hireId)</div>
@@ -1402,8 +1402,8 @@ await presaga.executeHire(hireId)</div>
 // ── CONFIG ──────────────────────────────────────────────────────────────────
 
 const CONFIG = {
-  CONTRACT:   '0x04d8bEA0bC25f4C69D215CcCb05eeb60eC733CcC',
-  USDT:       '0xAf435F77d7188799464Ce001B222a26B57119d76',
+  CONTRACT:   '0xCe1706b24BD7c0fbD37929D27851E5900b569116',
+  USDT:       '0x0fF5393387ad2f9f691FD6Fd28e07E3969e27e63',
   CHAIN_ID:   2368,
   CHAIN_HEX:  '0x940',
   RPC:        'https://rpc-testnet.gokite.ai/',
@@ -1562,8 +1562,8 @@ async function loadMarkets() {
 }
 
 function renderMarket(m, id) {
-  const totalYes = parseFloat(ethers.utils.formatUnits(m.totalYes, 6))
-  const totalNo  = parseFloat(ethers.utils.formatUnits(m.totalNo, 6))
+  const totalYes = parseFloat(ethers.utils.formatUnits(m.totalYes, 18))
+  const totalNo  = parseFloat(ethers.utils.formatUnits(m.totalNo, 18))
   const total    = totalYes + totalNo
   const yesPct   = total > 0 ? ((totalYes / total) * 100).toFixed(1) : '50.0'
   const noPct    = total > 0 ? ((totalNo  / total) * 100).toFixed(1) : '50.0'
@@ -1651,7 +1651,7 @@ async function loadAgents() {
     const rows = agentData.map((d, i) => {
       const wr  = (d.winRate.toNumber() / 100).toFixed(1)
       const hwr = (d.hireWinRate.toNumber() / 100).toFixed(1)
-      const fee = parseFloat(ethers.utils.formatUnits(d.agent.feePerDay, 6)).toFixed(2)
+      const fee = parseFloat(ethers.utils.formatUnits(d.agent.feePerDay, 18)).toFixed(2)
       return `
       <div class="agent-row">
         <div class="agent-rank">#${i + 1}</div>
@@ -1713,8 +1713,8 @@ async function loadHires() {
 
     const cards = hiresData.map((h, i) => {
       const m    = marketsData[i]
-      const budget = parseFloat(ethers.utils.formatUnits(h.budget, 6)).toFixed(2)
-      const fee    = parseFloat(ethers.utils.formatUnits(h.hireFee, 6)).toFixed(2)
+      const budget = parseFloat(ethers.utils.formatUnits(h.budget, 18)).toFixed(2)
+      const fee    = parseFloat(ethers.utils.formatUnits(h.hireFee, 18)).toFixed(2)
       const s    = h.status
       const now  = Math.floor(Date.now() / 1000)
       const canRefund = s === 0 && now > h.createdAt.toNumber() + 3600
@@ -1772,7 +1772,7 @@ function openHireModal(agentAddr, agentId, feePerDay) {
   hireAgentAddr = agentAddr
   hireAgentFee  = parseInt(feePerDay)
   document.getElementById('hire-modal-agent').innerHTML =
-    `Hiring: <strong style="color:var(--text)">${agentId}</strong> &bull; Fee: $${parseFloat(ethers.utils.formatUnits(feePerDay, 6)).toFixed(2)} USDT/day`
+    `Hiring: <strong style="color:var(--text)">${agentId}</strong> &bull; Fee: $${parseFloat(ethers.utils.formatUnits(feePerDay, 18)).toFixed(2)} USDT/day`
   document.getElementById('hire-budget').value = ''
   document.getElementById('hire-days').value   = ''
   document.getElementById('hire-cost-hint').textContent = 'Total hire fee: --'
@@ -1797,7 +1797,7 @@ function selectHireDirection(isYes) {
 
 function updateHireCost() {
   const days  = parseInt(document.getElementById('hire-days').value) || 0
-  const fee   = parseFloat(ethers.utils.formatUnits(hireAgentFee, 6))
+  const fee   = parseFloat(ethers.utils.formatUnits(hireAgentFee, 18))
   const total = (fee * days).toFixed(2)
   document.getElementById('hire-cost-hint').textContent = `Total hire fee: $${total} USDT (paid to agent on execution)`
 }
@@ -1818,7 +1818,7 @@ async function submitBet() {
   if (!walletAddress) return toast('Connect wallet first.', 'error')
   const raw = document.getElementById('bet-amount').value
   if (!raw || parseFloat(raw) < 1) return toast('Minimum bet is $1 USDT.', 'error')
-  const amount = ethers.utils.parseUnits(raw, 6)
+  const amount = ethers.utils.parseUnits(raw, 18)
   try {
     await ensureApproval(amount)
     toast('Placing bet...')
@@ -1848,7 +1848,7 @@ async function registerAgent() {
     toast('Agent registered.', 'success')
 
     if (feeRaw && parseFloat(feeRaw) > 0) {
-      const fee = ethers.utils.parseUnits(feeRaw, 6)
+      const fee = ethers.utils.parseUnits(feeRaw, 18)
       const tx2 = await contract.setHireFee(fee)
       await tx2.wait()
       toast('Hire fee set.', 'success')
@@ -1865,7 +1865,7 @@ async function setHireFee() {
   const raw = document.getElementById('fee-update').value
   if (!raw || parseFloat(raw) < 0) return toast('Enter a valid fee.', 'error')
   try {
-    const fee = ethers.utils.parseUnits(raw, 6)
+    const fee = ethers.utils.parseUnits(raw, 18)
     toast('Setting hire fee...')
     const tx = await contract.setHireFee(fee)
     await tx.wait()
@@ -1883,7 +1883,7 @@ async function submitHire() {
   if (!budgetRaw || parseFloat(budgetRaw) < 1) return toast('Minimum budget is $1 USDT.', 'error')
   if (!days || days < 1)                         return toast('Hire duration must be at least 1 day.', 'error')
 
-  const budget  = ethers.utils.parseUnits(budgetRaw, 6)
+  const budget  = ethers.utils.parseUnits(budgetRaw, 18)
   const hireFee = ethers.BigNumber.from(hireAgentFee).mul(days)
   const total   = budget.add(hireFee)
 
