@@ -1287,7 +1287,7 @@ kpass agent list</div>
   <div class="contract-info">
     <div class="contract-row">
       <span class="contract-key">Contract</span>
-      <span class="contract-val" id="info-contract">0x13405E183FcB49684c44C6f983c1adDf2d540ee6</span>
+      <span class="contract-val" id="info-contract">0x686D8734D3988BB6B89d679a48FF4058DFCB66e9</span>
     </div>
     <div class="contract-row">
       <span class="contract-key">Network</span>
@@ -1318,7 +1318,7 @@ kpass agent list</div>
     <div class="code-block" style="border:none;padding:16px 0 0 0;background:transparent;">import { ethers } from "ethers"
 
 const RPC      = "https://rpc-testnet.gokite.ai/"
-const CONTRACT = "0x13405E183FcB49684c44C6f983c1adDf2d540ee6"
+const CONTRACT = "0x686D8734D3988BB6B89d679a48FF4058DFCB66e9"
 const USDT     = "0xAf435F77d7188799464Ce001B222a26B57119d76"
 
 const provider = new ethers.JsonRpcProvider(RPC)
@@ -1375,20 +1375,13 @@ await presaga.executeHire(hireId)</div>
       <button class="modal-close" onclick="closeModal('hire-modal')">&times;</button>
     </div>
     <div id="hire-modal-agent" style="margin-bottom:16px;font-size:12px;color:var(--muted);"></div>
-    <div class="form-group">
-      <label class="form-label">Select Market</label>
-      <select class="form-select" id="hire-market-select"></select>
+    <div style="background:rgba(0,194,255,0.05);border:1px solid var(--border-hi);padding:12px 16px;margin-bottom:20px;font-size:11px;color:var(--muted);line-height:1.6;">
+      The agent will autonomously decide which market to bet on and in which direction. Your funds are held in the contract — the agent can never withdraw your principal.
     </div>
     <div class="form-group">
-      <label class="form-label">Direction</label>
-      <div class="direction-toggle">
-        <button class="direction-btn selected-yes" id="hire-yes-btn" onclick="selectHireDirection(true)">YES</button>
-        <button class="direction-btn" id="hire-no-btn" onclick="selectHireDirection(false)">NO</button>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Bet Amount (USDT)</label>
-      <input type="number" class="form-input" id="hire-bet-amount" placeholder="Minimum 1.00" min="1" step="0.01" />
+      <label class="form-label">Budget (USDT)</label>
+      <input type="number" class="form-input" id="hire-budget" placeholder="Minimum 1.00" min="1" step="0.01" />
+      <div class="form-hint">Amount the agent will use to place bets on your behalf.</div>
     </div>
     <div class="form-group">
       <label class="form-label">Hire Duration (Days)</label>
@@ -1409,7 +1402,7 @@ await presaga.executeHire(hireId)</div>
 // ── CONFIG ──────────────────────────────────────────────────────────────────
 
 const CONFIG = {
-  CONTRACT:   '0x13405E183FcB49684c44C6f983c1adDf2d540ee6',
+  CONTRACT:   '0x686D8734D3988BB6B89d679a48FF4058DFCB66e9',
   USDT:       '0xAf435F77d7188799464Ce001B222a26B57119d76',
   CHAIN_ID:   2368,
   CHAIN_HEX:  '0x940',
@@ -1421,15 +1414,15 @@ const ABI = [
   "function registerAgent(string calldata agentId, bytes calldata signature) external",
   "function setHireFee(uint256 feePerDay) external",
   "function placeBet(uint256 marketId, bool isYes, uint256 amount) external",
-  "function hireAgent(address agentAddress, uint256 marketId, bool isYes, uint256 betAmount, uint256 days_) external",
-  "function executeHire(uint256 hireId) external",
+  "function hireAgent(address agentAddress, uint256 budget, uint256 days_) external",
+  "function executeHire(uint256 hireId, uint256 marketId, bool isYes) external",
   "function settleHire(uint256 hireId) external",
   "function refundHire(uint256 hireId) external",
   "function claimWinnings(uint256 marketId) external",
   "function claimRefund(uint256 marketId) external",
   "function getMarket(uint256 marketId) external view returns (tuple(uint256 id, string question, string resolutionSource, uint256 expiresAt, uint256 createdAt, uint256 totalYes, uint256 totalNo, uint256 protocolFeePool, uint8 status, uint8 outcome))",
   "function getAgent(address wallet) external view returns (tuple(address wallet, string agentId, uint256 reputation, uint256 correctPredictions, uint256 totalPredictions, uint256 correctHires, uint256 totalHires, uint256 feePerDay, bool registered, uint256 registeredAt))",
-  "function getHire(uint256 hireId) external view returns (tuple(uint256 id, address human, address agent, uint256 marketId, bool isYes, uint256 betAmount, uint256 hireFee, uint256 days_, uint256 createdAt, uint8 status))",
+  "function getHire(uint256 hireId) external view returns (tuple(uint256 id, address human, address agent, uint256 budget, uint256 hireFee, uint256 days_, uint256 createdAt, uint256 marketId, bool isYes, uint8 status))",
   "function getAgentTier(address wallet) external view returns (string memory)",
   "function getAgentWinRate(address wallet) external view returns (uint256)",
   "function getAgentHireWinRate(address wallet) external view returns (uint256)",
@@ -1450,6 +1443,7 @@ const ERC20_ABI = [
 
 let provider, signer, contract, usdtContract
 let walletAddress = null
+let isAgent       = false
 let betMarketId   = null
 let betIsYes      = true
 let hireAgentAddr = null
@@ -1477,6 +1471,12 @@ async function connectWallet() {
       walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4)
     document.getElementById('connect-btn').textContent = 'Connected'
     document.getElementById('reg-wallet').value = walletAddress
+
+    // Check if connected wallet is a registered agent
+    try {
+      const agentData = await contract.getAgent(walletAddress)
+      isAgent = agentData.registered
+    } catch { isAgent = false }
 
     await loadAll()
   } catch (e) {
@@ -1584,10 +1584,12 @@ function renderMarket(m, id) {
     <div class="market-meta">
       <div class="market-timer">Expires <span id="timer-${id}">--</span></div>
       <div class="market-actions">
-        ${s === 0 ? `
+        ${s === 0 ? (isAgent ? `
           <button class="btn btn-yes btn-sm" onclick="openBetModal(${id}, '${m.question}', true)">Bet Yes</button>
           <button class="btn btn-no btn-sm" onclick="openBetModal(${id}, '${m.question}', false)">Bet No</button>
         ` : `
+          <button class="btn btn-sm" onclick="showPage('agents')">Hire Agent</button>
+        `) : `
           <button class="btn btn-sm" onclick="claimWinnings(${id})">Claim</button>
         `}
       </div>
@@ -1706,8 +1708,8 @@ async function loadHires() {
 
     const cards = hiresData.map((h, i) => {
       const m    = marketsData[i]
-      const fee  = parseFloat(ethers.utils.formatUnits(h.hireFee, 6)).toFixed(2)
-      const bet  = parseFloat(ethers.utils.formatUnits(h.betAmount, 6)).toFixed(2)
+      const budget = parseFloat(ethers.utils.formatUnits(h.budget, 6)).toFixed(2)
+      const fee    = parseFloat(ethers.utils.formatUnits(h.hireFee, 6)).toFixed(2)
       const s    = h.status
       const now  = Math.floor(Date.now() / 1000)
       const canRefund = s === 0 && now > h.createdAt.toNumber() + 3600
@@ -1718,10 +1720,10 @@ async function loadHires() {
           <div class="hire-meta">HIRE #${h.id} &bull; Agent: ${h.agent.slice(0,8)}...${h.agent.slice(-6)}</div>
           <div class="hire-question">${m.question}</div>
           <div class="hire-details">
-            <div class="hire-detail">Direction: <span>${h.isYes ? 'YES' : 'NO'}</span></div>
-            <div class="hire-detail">Bet: <span>$${bet} USDT</span></div>
+            <div class="hire-detail">Budget: <span>$${budget} USDT</span></div>
             <div class="hire-detail">Hire Fee: <span>$${fee} USDT</span></div>
             <div class="hire-detail">Days: <span>${h.days_.toString()}</span></div>
+            ${h.status > 0 ? `<div class="hire-detail">Market: <span>#${h.marketId.toString()}</span></div>` : ''}
           </div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;">
@@ -1756,17 +1758,11 @@ function openHireModal(agentAddr, agentId, feePerDay) {
   if (!walletAddress) return toast('Connect your wallet first.', 'error')
   hireAgentAddr = agentAddr
   hireAgentFee  = parseInt(feePerDay)
-  hireIsYes     = true
   document.getElementById('hire-modal-agent').innerHTML =
     `Hiring: <strong style="color:var(--text)">${agentId}</strong> &bull; Fee: $${parseFloat(ethers.utils.formatUnits(feePerDay, 6)).toFixed(2)} USDT/day`
-  selectHireDirection(true)
-
-  // Populate markets
-  const sel = document.getElementById('hire-market-select')
-  sel.innerHTML = openMarkets.length === 0
-    ? '<option>No open markets</option>'
-    : openMarkets.map((m, i) => `<option value="${i}">${m.question.slice(0, 60)}...</option>`).join('')
-
+  document.getElementById('hire-budget').value = ''
+  document.getElementById('hire-days').value   = ''
+  document.getElementById('hire-cost-hint').textContent = 'Total hire fee: --'
   document.getElementById('hire-modal').classList.add('open')
 }
 
@@ -1787,10 +1783,10 @@ function selectHireDirection(isYes) {
 }
 
 function updateHireCost() {
-  const days = parseInt(document.getElementById('hire-days').value) || 0
-  const fee  = parseFloat(ethers.utils.formatUnits(hireAgentFee, 6))
+  const days  = parseInt(document.getElementById('hire-days').value) || 0
+  const fee   = parseFloat(ethers.utils.formatUnits(hireAgentFee, 6))
   const total = (fee * days).toFixed(2)
-  document.getElementById('hire-cost-hint').textContent = `Total hire fee: $${total} USDT`
+  document.getElementById('hire-cost-hint').textContent = `Total hire fee: $${total} USDT (paid to agent on execution)`
 }
 
 // ── TRANSACTIONS ──────────────────────────────────────────────────────────────
@@ -1868,22 +1864,20 @@ async function setHireFee() {
 
 async function submitHire() {
   if (!walletAddress) return toast('Connect wallet first.', 'error')
-  const sel     = document.getElementById('hire-market-select')
-  const marketId = parseInt(sel.value)
-  const betRaw  = document.getElementById('hire-bet-amount').value
-  const days    = parseInt(document.getElementById('hire-days').value)
+  const budgetRaw = document.getElementById('hire-budget').value
+  const days      = parseInt(document.getElementById('hire-days').value)
 
-  if (!betRaw || parseFloat(betRaw) < 1) return toast('Minimum bet is $1 USDT.', 'error')
-  if (!days || days < 1)                  return toast('Hire duration must be at least 1 day.', 'error')
+  if (!budgetRaw || parseFloat(budgetRaw) < 1) return toast('Minimum budget is $1 USDT.', 'error')
+  if (!days || days < 1)                         return toast('Hire duration must be at least 1 day.', 'error')
 
-  const betAmount = ethers.utils.parseUnits(betRaw, 6)
-  const hireFee   = ethers.BigNumber.from(hireAgentFee).mul(days)
-  const total     = betAmount.add(hireFee)
+  const budget  = ethers.utils.parseUnits(budgetRaw, 6)
+  const hireFee = ethers.BigNumber.from(hireAgentFee).mul(days)
+  const total   = budget.add(hireFee)
 
   try {
     await ensureApproval(total)
     toast('Hiring agent...')
-    const tx = await contract.hireAgent(hireAgentAddr, marketId, hireIsYes, betAmount, days)
+    const tx = await contract.hireAgent(hireAgentAddr, budget, days)
     await tx.wait()
     closeModal('hire-modal')
     toast('Agent hired.', 'success')
@@ -1944,7 +1938,7 @@ function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
   document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'))
   document.getElementById('page-' + name).classList.add('active')
-  event.target.classList.add('active')
+  if (event?.target) event.target.classList.add('active')
   if (name === 'hires') loadHires()
 }
 
@@ -1967,3 +1961,4 @@ if (window.ethereum) {
 </script>
 </body>
 </html>
+
