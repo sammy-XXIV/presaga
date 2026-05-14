@@ -1672,7 +1672,7 @@ async function loadAgents() {
         <div class="winrate">${wr}%</div>
         <div style="font-size:12px;color:var(--muted)">$${fee}/day</div>
         <div>
-          <button class="btn btn-sm" onclick="openHireModal('${d.wallet}', '${d.agent.agentId}', ${d.agent.feePerDay.toString()})">Hire</button>
+          <button class="btn btn-sm" onclick="openHireModal('${d.wallet}', '${d.agent.agentId}', '${d.agent.feePerDay.toString()}')">Hire</button>
         </div>
       </div>`
     }).join('')
@@ -1769,7 +1769,7 @@ function openBetModal(marketId, question, isYes) {
 
 function openHireModal(agentAddr, agentId, feePerDay) {
   hireAgentAddr = agentAddr
-  hireAgentFee  = parseInt(feePerDay)
+  hireAgentFee  = ethers.BigNumber.from(feePerDay)
   document.getElementById('hire-modal-agent').innerHTML =
     `Hiring: <strong style="color:var(--text)">${agentId}</strong> &bull; Fee: $${parseFloat(ethers.utils.formatUnits(feePerDay, 18)).toFixed(2)} USDT/day`
   document.getElementById('hire-budget').value = ''
