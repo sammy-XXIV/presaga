@@ -27,6 +27,12 @@
     --silver:       #6b7280;
     --gold:         #d97706;
     --platinum:     #516c1c;
+    --shadow-xs:    0 1px 2px rgba(0,0,0,0.05);
+    --shadow-sm:    0 1px 4px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+    --shadow-md:    0 4px 20px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+    --shadow-lg:    0 12px 48px rgba(0,0,0,0.13), 0 4px 14px rgba(0,0,0,0.06);
+    --ease:         cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --spring:       cubic-bezier(0.34, 1.4, 0.64, 1);
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -50,9 +56,11 @@
     justify-content: space-between;
     padding: 0 32px;
     height: 60px;
-    border-bottom: 1px solid var(--border);
-    background: #FFFFFF;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border-bottom: 1px solid rgba(237,228,219,0.8);
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(20px) saturate(1.8);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    box-shadow: var(--shadow-xs);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -79,14 +87,17 @@
     font-weight: 500;
     color: var(--muted);
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 8px;
     border: 1px solid transparent;
-    transition: all 0.15s;
+    transition: all 0.2s var(--ease);
   }
 
-  .nav-link:hover, .nav-link.active {
+  .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+
+  .nav-link.active {
     color: var(--accent);
     background: var(--accent-light);
+    font-weight: 600;
   }
 
   .nav-right {
@@ -115,27 +126,34 @@
     background: var(--surface);
     color: var(--text);
     cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.15s;
+    border-radius: 8px;
+    transition: all 0.2s var(--ease), transform 0.15s var(--spring);
+    user-select: none;
   }
 
   .btn:hover {
     border-color: var(--accent);
     color: var(--accent);
     background: var(--accent-light);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
   }
+
+  .btn:active { transform: scale(0.97) translateY(0); box-shadow: none; }
 
   .btn-primary {
     background: var(--accent);
     border-color: var(--accent);
     color: #FFFFFF;
     font-weight: 600;
+    box-shadow: 0 2px 8px rgba(81,108,28,0.25);
   }
 
   .btn-primary:hover {
     background: #3d5215;
     border-color: #3d5215;
     color: #FFFFFF;
+    box-shadow: 0 4px 16px rgba(81,108,28,0.35);
   }
 
   .btn-yes {
@@ -154,23 +172,32 @@
 
   .btn-no:hover { background: #fecaca; }
 
-  .btn-sm {
-    padding: 5px 12px;
-    font-size: 12px;
-  }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
 
-  .btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
 
   /* ── PAGES ── */
   .page { display: none; padding: 40px 32px; max-width: 1100px; margin: 0 auto; }
-  .page.active { display: block; animation: fadeIn 0.2s ease; }
+  .page.active { display: block; animation: pageIn 0.35s var(--ease) both; }
+
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position: 600px 0; }
   }
 
   /* ── PAGE HEADER ── */
@@ -215,9 +242,15 @@
   .stat-cell {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 14px;
     padding: 20px 24px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  }
+
+  .stat-cell:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
   }
 
   .stat-label {
@@ -244,14 +277,16 @@
   .market-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 16px;
     padding: 24px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-    transition: box-shadow 0.15s, border-color 0.15s;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), border-color 0.2s;
+    animation: cardIn 0.4s var(--ease) both;
   }
 
   .market-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
     border-color: var(--border-hi);
   }
 
@@ -298,12 +333,31 @@
   }
 
   .odds-bar {
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 12px 16px;
+    transition: transform 0.2s var(--ease);
   }
+
+  .odds-bar:hover { transform: scale(1.01); }
 
   .odds-bar.odds-yes { background: var(--yes-bg); }
   .odds-bar.odds-no  { background: var(--no-bg); }
+
+  /* Probability bar */
+  .prob-bar {
+    height: 6px;
+    border-radius: 99px;
+    background: var(--no-bg);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .prob-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--yes);
+    transition: width 0.6s var(--ease);
+  }
 
   .odds-label {
     font-size: 11px;
@@ -366,12 +420,17 @@
   .modal {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.12);
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg);
     padding: 32px;
     width: 480px;
     max-width: calc(100vw - 48px);
-    animation: fadeIn 0.15s ease;
+    animation: modalIn 0.3s var(--spring) both;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.93) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
   }
 
   .modal-header {
@@ -484,12 +543,43 @@
   }
 
   /* ── AGENTS ── */
+  /* ── SKELETON ── */
+  .skel {
+    border-radius: 8px;
+    background: linear-gradient(90deg, var(--border) 25%, #f5ece4 50%, var(--border) 75%);
+    background-size: 600px 100%;
+    animation: shimmer 1.4s infinite linear;
+  }
+
+  .skel-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ── AGENT AVATAR ── */
+  .agent-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #FFFFFF;
+    flex-shrink: 0;
+    letter-spacing: 0.03em;
+  }
+
   .agents-table {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-sm);
   }
 
   .agents-thead {
@@ -517,7 +607,8 @@
     gap: 12px;
     align-items: center;
     border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
+    transition: background 0.2s var(--ease);
+    animation: cardIn 0.35s var(--ease) both;
   }
 
   .agent-row:last-child { border-bottom: none; }
@@ -696,17 +787,18 @@
   .hire-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 16px;
     padding: 24px;
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 24px;
     align-items: center;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-    transition: box-shadow 0.15s;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+    animation: cardIn 0.35s var(--ease) both;
   }
 
-  .hire-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .hire-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
   .hire-meta {
     font-size: 11px;
@@ -924,9 +1016,11 @@
     top: 60px;
     left: 0;
     right: 0;
-    background: #FFFFFF;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     z-index: 99;
     padding: 8px 0;
   }
@@ -1515,23 +1609,47 @@ async function loadAll() {
   await Promise.all([loadMarkets(), loadAgents(), loadStats()])
 }
 
+function animateCount(el, target) {
+  const n = parseInt(target) || 0
+  if (n === 0) { el.textContent = '0'; return }
+  let start = 0
+  const dur = 900
+  const t0 = performance.now()
+  function step(now) {
+    const p = Math.min((now - t0) / dur, 1)
+    const e = 1 - Math.pow(1 - p, 3)
+    el.textContent = Math.floor(e * n)
+    if (p < 1) requestAnimationFrame(step)
+    else el.textContent = n
+  }
+  requestAnimationFrame(step)
+}
+
 async function loadStats() {
   try {
     const [mc, hc] = await Promise.all([
       readContract.marketCount(),
       readContract.hireCount(),
     ])
-    document.getElementById('stat-markets').textContent = mc.toString()
-    document.getElementById('stat-hires').textContent   = hc.toString()
+    animateCount(document.getElementById('stat-markets'), mc.toString())
+    animateCount(document.getElementById('stat-hires'),   hc.toString())
   } catch {}
 }
 
 async function loadMarkets() {
   const container = document.getElementById('markets-container')
+  container.innerHTML = `<div class="markets-grid">${[1,2,3].map(() => `
+    <div class="skel-card">
+      <div class="skel" style="height:12px;width:80px;margin-bottom:14px;"></div>
+      <div class="skel" style="height:18px;width:90%;margin-bottom:8px;"></div>
+      <div class="skel" style="height:18px;width:65%;margin-bottom:20px;"></div>
+      <div class="skel" style="height:72px;margin-bottom:14px;"></div>
+      <div class="skel" style="height:6px;margin-bottom:14px;border-radius:99px;"></div>
+      <div class="skel" style="height:12px;width:110px;"></div>
+    </div>`).join('')}</div>`
   try {
     const ids = await readContract.getOpenMarkets()
     openMarkets = []
-
     if (ids.length === 0) {
       container.innerHTML = `<div class="empty-state">
         <div class="empty-state-title">No open markets</div>
@@ -1539,13 +1657,9 @@ async function loadMarkets() {
       </div>`
       return
     }
-
     const markets = await Promise.all(ids.map(id => readContract.getMarket(id)))
     openMarkets = markets
-
-    const html = `<div class="markets-grid">${markets.map((m, i) => renderMarket(m, ids[i])).join('')}</div>`
-    container.innerHTML = html
-
+    container.innerHTML = `<div class="markets-grid">${markets.map((m, i) => renderMarket(m, ids[i], i)).join('')}</div>`
     markets.forEach((m, i) => startTimer(ids[i].toString(), m.expiresAt.toNumber()))
   } catch (e) {
     container.innerHTML = `<div class="empty-state">
@@ -1555,18 +1669,18 @@ async function loadMarkets() {
   }
 }
 
-function renderMarket(m, id) {
+function renderMarket(m, id, idx = 0) {
   const totalYes = parseFloat(ethers.utils.formatUnits(m.totalYes, 18))
   const totalNo  = parseFloat(ethers.utils.formatUnits(m.totalNo, 18))
   const total    = totalYes + totalNo
   const yesPct   = total > 0 ? ((totalYes / total) * 100).toFixed(1) : '50.0'
   const noPct    = total > 0 ? ((totalNo  / total) * 100).toFixed(1) : '50.0'
-  const statusMap = ['open', 'resolved', 'cancelled']
+  const statusMap   = ['open', 'resolved', 'cancelled']
   const statusLabel = ['Open', 'Resolved', 'Cancelled']
   const s = m.status
 
   return `
-  <div class="market-card">
+  <div class="market-card" style="animation-delay:${idx * 0.06}s">
     <div class="market-top">
       <div class="market-id">MARKET #${id}</div>
       <div class="market-status ${statusMap[s]}">${statusLabel[s]}</div>
@@ -1584,8 +1698,10 @@ function renderMarket(m, id) {
         <div class="odds-volume">${totalNo.toFixed(2)} USDT</div>
       </div>
     </div>
+    <div class="prob-bar"><div class="prob-bar-fill" style="width:${yesPct}%"></div></div>
     <div class="market-meta">
       <div class="market-timer">Expires <span id="timer-${id}">--</span></div>
+      <div style="font-size:11px;color:var(--muted)">Vol: ${(total).toFixed(2)} USDT</div>
     </div>
   </div>`
 }
@@ -1607,6 +1723,21 @@ function startTimer(id, expiresAt) {
 
 async function loadAgents() {
   const container = document.getElementById('agents-container')
+  container.innerHTML = `<div class="agents-table">
+    ${[1,2,3].map(() => `
+      <div style="display:grid;grid-template-columns:40px 1fr 100px 100px 100px 100px 120px;padding:18px 20px;gap:12px;align-items:center;border-bottom:1px solid var(--border);">
+        <div class="skel" style="height:14px;width:24px;"></div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div class="skel" style="width:34px;height:34px;border-radius:50%;flex-shrink:0;"></div>
+          <div><div class="skel" style="height:13px;width:100px;margin-bottom:6px;"></div><div class="skel" style="height:11px;width:130px;"></div></div>
+        </div>
+        <div class="skel" style="height:20px;width:60px;border-radius:4px;"></div>
+        <div class="skel" style="height:14px;width:40px;"></div>
+        <div class="skel" style="height:14px;width:45px;"></div>
+        <div class="skel" style="height:14px;width:55px;"></div>
+        <div class="skel" style="height:30px;width:60px;border-radius:8px;"></div>
+      </div>`).join('')}
+  </div>`
   try {
     const filter = readContract.filters.AgentRegistered()
     const events = await readContract.queryFilter(filter, 21375000, 'latest')
@@ -1635,16 +1766,22 @@ async function loadAgents() {
     // Sort by reputation
     agentData.sort((a, b) => b.agent.reputation.toNumber() - a.agent.reputation.toNumber())
 
+    const avatarColors = ['#516c1c','#15803d','#b45309','#6b7280','#d97706','#dc2626','#7c3aed']
     const rows = agentData.map((d, i) => {
-      const wr  = (d.winRate.toNumber() / 100).toFixed(1)
-      const hwr = (d.hireWinRate.toNumber() / 100).toFixed(1)
-      const fee = parseFloat(ethers.utils.formatUnits(d.agent.feePerDay, 18)).toFixed(2)
+      const wr      = (d.winRate.toNumber() / 100).toFixed(1)
+      const hwr     = (d.hireWinRate.toNumber() / 100).toFixed(1)
+      const fee     = parseFloat(ethers.utils.formatUnits(d.agent.feePerDay, 18)).toFixed(2)
+      const initials = d.agent.agentId.split(/[-_\s]/).map(w => w[0]).join('').slice(0,2).toUpperCase()
+      const color   = avatarColors[i % avatarColors.length]
       return `
-      <div class="agent-row">
+      <div class="agent-row" style="animation-delay:${i * 0.05}s">
         <div class="agent-rank">#${i + 1}</div>
-        <div>
-          <div class="agent-id">${d.agent.agentId}</div>
-          <div class="agent-addr">${d.wallet.slice(0,8)}...${d.wallet.slice(-6)}</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="agent-avatar" style="background:${color}">${initials}</div>
+          <div>
+            <div class="agent-id">${d.agent.agentId}</div>
+            <div class="agent-addr">${d.wallet.slice(0,8)}...${d.wallet.slice(-6)}</div>
+          </div>
         </div>
         <div><span class="tier-badge tier-${d.tier}">${d.tier}</span></div>
         <div class="rep-value">${d.agent.reputation.toString()}</div>
