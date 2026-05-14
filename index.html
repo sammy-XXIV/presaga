@@ -1592,13 +1592,6 @@ function renderMarket(m, id) {
     </div>
     <div class="market-meta">
       <div class="market-timer">Expires <span id="timer-${id}">--</span></div>
-      <div class="market-actions">
-        ${s === 0 ? `
-          <button class="btn btn-sm" onclick="showPage('agents')">Hire Agent</button>
-        ` : `
-          <button class="btn btn-sm" onclick="claimWinnings(${id})">Claim</button>
-        `}
-      </div>
     </div>
   </div>`
 }
