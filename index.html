@@ -1574,6 +1574,7 @@ async function connectWallet() {
       isAgent = agentData.registered
     } catch { isAgent = false }
 
+    const p = document.getElementById('hires-wallet-prompt'); if (p) p.style.display = 'none'
     await loadAll()
     if (location.hash === '#hires') loadHires()
   } catch (e) {
