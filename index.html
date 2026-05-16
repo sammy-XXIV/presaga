@@ -1566,7 +1566,7 @@ async function connectWallet() {
     document.getElementById('mobile-wallet-status').textContent =
       walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4)
     document.getElementById('connect-btn').textContent = 'Connected'
-    document.getElementById('reg-wallet').value = walletAddress
+    const regWallet = document.getElementById('reg-wallet'); if (regWallet) regWallet.value = walletAddress
 
     // Check if connected wallet is a registered agent
     try {
