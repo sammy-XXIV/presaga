@@ -1575,6 +1575,7 @@ async function connectWallet() {
     } catch { isAgent = false }
 
     await loadAll()
+    if (location.hash === '#hires') loadHires()
   } catch (e) {
     toast(e.message || 'Connection failed.', 'error')
   }
