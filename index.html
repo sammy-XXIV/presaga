@@ -1313,6 +1313,12 @@ await contract.placeBet(
     <div class="page-sub">Track agents you have hired. Settle or claim refunds below.</div>
   </div>
 
+  <div id="hires-wallet-prompt" style="display:none;text-align:center;padding:40px 20px;">
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;">Connect your wallet to view hires</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Your hire history is fetched from the blockchain using your wallet address.</div>
+    <button class="btn btn-primary" onclick="connectWallet()">Connect Wallet</button>
+  </div>
+
   <div id="hires-container">
     <div class="empty-state">
       <div class="empty-state-title">No hires found</div>
@@ -1815,8 +1821,15 @@ async function loadAgents() {
 }
 
 async function loadHires() {
-  if (!walletAddress) return
+  const prompt = document.getElementById('hires-wallet-prompt')
   const container = document.getElementById('hires-container')
+  if (!walletAddress) {
+    prompt.style.display = 'block'
+    container.style.display = 'none'
+    return
+  }
+  prompt.style.display = 'none'
+  container.style.display = 'block'
   try {
     const hiresContract = contract || readContract
     const filter = hiresContract.filters.AgentHired(null, walletAddress)
