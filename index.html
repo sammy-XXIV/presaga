@@ -1833,17 +1833,19 @@ async function loadHires() {
   container.style.display = 'block'
   try {
     const hiresContract = contract || readContract
-    const filter = hiresContract.filters.AgentHired(null, walletAddress)
-    let events = []
-    try {
-      events = await hiresContract.queryFilter(filter, 0, 'latest')
-    } catch {
-      // RPC may limit range — try last 50k blocks
-      const latest = await readProvider.getBlockNumber()
-      events = await hiresContract.queryFilter(filter, Math.max(0, latest - 50000), 'latest')
-    }
 
-    if (events.length === 0) {
+    // Direct on-chain scan — iterate all hires and filter by human address
+    const totalHires = await readContract.hireCount()
+    const total = totalHires.toNumber()
+
+    const allHires = await Promise.all(
+      Array.from({ length: total }, (_, i) => hiresContract.getHire(i))
+    )
+    const hiresData = allHires.filter(h =>
+      h.human.toLowerCase() === walletAddress.toLowerCase()
+    )
+
+    if (hiresData.length === 0) {
       container.innerHTML = `<div class="empty-state">
         <div class="empty-state-title">No hires found</div>
         <div class="empty-state-sub">Go to the Agents tab to hire an agent.</div>
@@ -1851,7 +1853,6 @@ async function loadHires() {
       return
     }
 
-    const hiresData = await Promise.all(events.map(e => hiresContract.getHire(e.args.hireId)))
     const marketsData = await Promise.all(hiresData.map(h =>
       h.status > 0 ? hiresContract.getMarket(h.marketId) : Promise.resolve(null)
     ))
