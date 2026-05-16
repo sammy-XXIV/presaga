@@ -1831,6 +1831,7 @@ async function loadHires() {
   }
   prompt.style.display = 'none'
   container.style.display = 'block'
+  container.innerHTML = `<div style="display:flex;justify-content:center;padding:60px 0"><div class="spinner" style="width:24px;height:24px;border-width:2px"></div></div>`
   try {
     const hiresContract = contract || readContract
 
