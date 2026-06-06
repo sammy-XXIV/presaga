@@ -1656,7 +1656,26 @@ async function loadMarkets() {
       <div class="skel" style="height:12px;width:110px;"></div>
     </div>`).join('')}</div>`
   try {
-    const ids = await readContract.getOpenMarkets()
+    // Try backend first — returns curated, deduplicated markets from Supabase
+    let ids = []
+    try {
+      const resp = await fetch(CONFIG.BACKEND + '/api/markets')
+      if (resp.ok) {
+        const rows = await resp.json()
+        if (Array.isArray(rows) && rows.length > 0) {
+          ids = rows
+            .filter(r => r.presaga_market_id != null)
+            .map(r => ethers.BigNumber.from(r.presaga_market_id))
+        }
+      }
+    } catch {}
+
+    // Fallback: fetch from contract, limit to 20 most-recent to avoid RPC overload
+    if (ids.length === 0) {
+      const allIds = await readContract.getOpenMarkets()
+      ids = allIds.slice(-20)
+    }
+
     openMarkets = []
     if (ids.length === 0) {
       container.innerHTML = `<div class="empty-state">
