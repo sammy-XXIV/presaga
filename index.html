@@ -1544,6 +1544,7 @@ let hireAgentAddr = null
 let hireIsYes     = true
 let hireAgentFee  = 0
 let openMarkets   = []
+let marketsPage   = 0
 
 // ── WALLET ───────────────────────────────────────────────────────────────────
 
@@ -1635,13 +1636,10 @@ function animateCount(el, target) {
 
 async function loadStats() {
   try {
-    const [mc, hc] = await Promise.all([
-      readContract.marketCount(),
-      readContract.hireCount(),
-    ])
-    animateCount(document.getElementById('stat-markets'), mc.toString())
-    animateCount(document.getElementById('stat-hires'),   hc.toString())
+    const hc = await readContract.hireCount()
+    animateCount(document.getElementById('stat-hires'), hc.toString())
   } catch {}
+  // stat-markets is updated by loadMarkets() once we know the real open count
 }
 
 async function loadMarkets() {
@@ -1656,12 +1654,15 @@ async function loadMarkets() {
       <div class="skel" style="height:12px;width:110px;"></div>
     </div>`).join('')}</div>`
   try {
-    // Try backend first — returns curated, deduplicated markets from Supabase
+    // Try backend first — paginated, deduplicated markets from Supabase
     let ids = []
+    let totalOpen = 0
     try {
-      const resp = await fetch(CONFIG.BACKEND + '/api/markets')
+      const resp = await fetch(CONFIG.BACKEND + '/api/markets?limit=200&page=' + (marketsPage || 0))
       if (resp.ok) {
-        const rows = await resp.json()
+        const body = await resp.json()
+        const rows = body.markets || body  // handle both new {markets,total} and old array shape
+        totalOpen  = body.total  ?? (Array.isArray(body) ? body.length : 0)
         if (Array.isArray(rows) && rows.length > 0) {
           ids = rows
             .filter(r => r.presaga_market_id != null)
@@ -1670,11 +1671,16 @@ async function loadMarkets() {
       }
     } catch {}
 
-    // Fallback: fetch from contract, limit to 20 most-recent to avoid RPC overload
+    // Fallback: fetch directly from contract, limit to 20 most-recent
     if (ids.length === 0) {
       const allIds = await readContract.getOpenMarkets()
+      totalOpen = allIds.length
       ids = allIds.slice(-20)
     }
+
+    // Update open-markets stat with real open count
+    const statEl = document.getElementById('stat-markets')
+    if (statEl) animateCount(statEl, String(totalOpen))
 
     openMarkets = []
     if (ids.length === 0) {
@@ -1686,13 +1692,53 @@ async function loadMarkets() {
     }
     const markets = await Promise.all(ids.map(id => readContract.getMarket(id)))
     openMarkets = markets
-    container.innerHTML = `<div class="markets-grid">${markets.map((m, i) => renderMarket(m, ids[i], i)).join('')}</div>`
+    const showLoad = totalOpen > ids.length
+    container.innerHTML = `<div class="markets-grid">${markets.map((m, i) => renderMarket(m, ids[i], i)).join('')}</div>` +
+      (showLoad ? `<div style="text-align:center;margin-top:24px"><button class="btn" onclick="loadMoreMarkets()">Load more markets (${totalOpen - ids.length} remaining)</button></div>` : '')
     markets.forEach((m, i) => startTimer(ids[i].toString(), m.expiresAt.toNumber()))
   } catch (e) {
     container.innerHTML = `<div class="empty-state">
       <div class="empty-state-title">Failed to load markets</div>
       <div class="empty-state-sub">${e.message}</div>
     </div>`
+  }
+}
+
+async function loadMoreMarkets() {
+  marketsPage++
+  const btn = document.querySelector('#markets-container button')
+  if (btn) btn.disabled = true
+
+  try {
+    const resp = await fetch(CONFIG.BACKEND + '/api/markets?limit=200&page=' + marketsPage)
+    if (!resp.ok) throw new Error('Backend error')
+    const body = await resp.json()
+    const rows = body.markets || []
+    const totalOpen = body.total ?? 0
+
+    if (!rows.length) return
+
+    const ids  = rows.filter(r => r.presaga_market_id != null).map(r => ethers.BigNumber.from(r.presaga_market_id))
+    const newMarkets = await Promise.all(ids.map(id => readContract.getMarket(id)))
+    const startIdx   = openMarkets.length
+    openMarkets      = openMarkets.concat(newMarkets)
+
+    const grid = document.querySelector('#markets-container .markets-grid')
+    if (grid) grid.insertAdjacentHTML('beforeend', newMarkets.map((m, i) => renderMarket(m, ids[i], startIdx + i)).join(''))
+
+    newMarkets.forEach((m, i) => startTimer(ids[i].toString(), m.expiresAt.toNumber()))
+
+    // Replace the "load more" button with updated count
+    const loadBtn = document.querySelector('#markets-container > div:last-child > button')
+    const remaining = totalOpen - openMarkets.length
+    if (loadBtn) {
+      loadBtn.parentElement.outerHTML = remaining > 0
+        ? `<div style="text-align:center;margin-top:24px"><button class="btn" onclick="loadMoreMarkets()">Load more markets (${remaining} remaining)</button></div>`
+        : ''
+    }
+  } catch (e) {
+    if (btn) { btn.disabled = false }
+    console.error('loadMoreMarkets failed:', e.message)
   }
 }
 
